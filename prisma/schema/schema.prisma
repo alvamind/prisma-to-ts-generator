@@ -1,0 +1,124 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder", "driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// generator prismabox {
+//   provider                    = "prismabox"
+//   output                      = "../../src/common/dtos/generated"
+//   typeboxImportVariableName   = "t"
+//   typeboxImportDependencyName = "elysia"
+//   // additionalProperties        = false
+//   inputModel                  = true
+// }
+
+generator zod {
+  provider                         = "zod-prisma-types"
+  output                           = "../../src/common/dtos/generated" // default is ./generated/zod
+  useMultipleFiles                 = false // default is false
+  writeBarrelFiles                 = false // default is true
+  createInputTypes                 = true // default is true
+  createModelTypes                 = true // default is true
+  addInputTypeValidation           = true // default is true
+  addIncludeType                   = true // default is true
+  addSelectType                    = false // default is true
+  validateWhereUniqueInput         = true // default is true
+  createOptionalDefaultValuesTypes = true // default is false
+  createRelationValuesTypes        = true // default is false
+  createPartialTypes               = true // default is false
+  useDefaultValidators             = true // default is true
+  coerceDate                       = true // default is true
+  writeNullishInModelTypes         = true // default is false
+}
+
+model Workspace {
+  id                       Int                     @id @default(autoincrement())
+  name                     String
+  type                     WorkspaceTypeEnum
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  folders                  Folder[]
+  onBlockTaskStatus        BlockTaskStatus[]
+  onBlock                  Block[]
+  onDynamicAttributes      DynamicAttribute[]
+  onDynamicAttributeGroups DynamicAttributeGroup[]
+  onUser                   User[]
+}
+
+model Folder {
+  id          Int       @id @default(autoincrement())
+  name        String
+  blocks      Block[]
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model File {
+  id                     Int             @id @default(autoincrement())
+  url                    String
+  name                   String
+  description            String?
+  mimeType               MimeTypeEnum
+  type                   FileTypeEnum
+  size                   Int
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  userImage              User?
+  blockImage             Block?
+  ritualCategoryImage    RitualCategory?
+  blockRitualReference   BlockRitual?    @relation(fields: [blockRitualReferenceId], references: [id])
+  blockRitualReferenceId Int?
+}
+
+model DynamicAttributeGroup {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String?
+  attributes  DynamicAttribute[]
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id])
+  workspaceId Int
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([name, workspaceId])
+}
+
+model DynamicAttribute {
+  id                      Int                    @id @default(autoincrement())
+  name                    String
+  description             String?
+  dataType                DataTypeEnum
+  value                   String?
+  blockTask               BlockTask?             @relation(fields: [blockTaskId], references: [blockId])
+  blockTaskId             Int?
+  blockJournal            BlockJournal?          @relation(fields: [blockJournalId], references: [blockId])
+  blockJournalId          Int?
+  blockRitual             BlockRitual?           @relation(fields: [blockRitualId], references: [blockId])
+  blockRitualId           Int?
+  measurement             Measurement?           @relation(fields: [measurementId], references: [id])
+  measurementId           Int?
+  dynamicAttributeGroup   DynamicAttributeGroup? @relation(fields: [dynamicAttributeGroupId], references: [id])
+  dynamicAttributeGroupId Int?
+  workspace               Workspace              @relation(fields: [workspaceId], references: [id])
+  workspaceId             Int
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  @@unique([name, workspaceId])
+}
+
+model PlatformSetting {
+  id                    Int      @id @default(autoincrement())
+  defaultAIAgentSetting Json?    @default("{ \"voiceGender\": \"female\", \"voiceSpeed\": 1.0, \"voicePitch\": 1.0, \"voiceVolume\": 1.0, \"ttsEnabled\": true, \"temperature\": 0.7, \"topP\": 0.9, \"presencePenalty\": 0, \"frequencyPenalty\": 0, \"maxTokens\": 1000, \"personality\": \"proaktif\", \"tone\": \"ramah\", \"speakingStyle\": \"padat, tanpa ampas kata\" }")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+//TODO: Audit Log

@@ -1,0 +1,92 @@
+model AIResponse {
+  id           Int                @id @default(autoincrement())
+  response     String
+  status       ResponseStatusEnum @default(PENDING)
+  responseTime Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  AIUserId     Int
+  AIUser       User               @relation(fields: [AIUserId], references: [id], onDelete: Cascade)
+  errors       AIResponseError[]
+  message      Message?
+}
+
+model AIResponseError {
+  id              Int           @id @default(autoincrement())
+  error           String // Error message
+  errorCode       String? // Optional error code from provider
+  httpStatus      Int? // HTTP status code if applicable
+  requestPayload  String // The request that failed
+  createdAt       DateTime      @default(now())
+  aIProviderKeyId Int
+  aIProviderKey   AIProviderKey @relation(fields: [aIProviderKeyId], references: [id])
+  aiResponse      AIResponse?   @relation(fields: [aiResponseId], references: [id])
+  aiResponseId    Int?
+
+  @@index([aIProviderKeyId])
+  @@index([aiResponseId])
+}
+
+model AIProviderToLLMModel {
+  id               Int        @id @default(autoincrement())
+  providerId       Int
+  modelId          Int
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  inputTokenPrice  Decimal?
+  outputTokenPrice Decimal?
+  rpm              Int?
+  rpd              Int?
+  tpm              Int?
+  AIProvider       AIProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  LLMModel         LLMModel   @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, modelId])
+  @@index([providerId])
+  @@index([modelId])
+}
+
+model LLMModel {
+  id         Int                    @id @default(autoincrement())
+  name       String
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  aIProvider AIProviderToLLMModel[]
+  isActive   Boolean                @default(true)
+
+  @@unique([name])
+}
+
+model AIProvider {
+  id         Int                    @id @default(autoincrement())
+  name       String                 @unique
+  baseUrl    String
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  isActive   Boolean                @default(true)
+  usageCount Int                    @default(0)
+  lastUsed   DateTime?
+  keys       AIProviderKey[]
+  llmModels  AIProviderToLLMModel[]
+
+  @@index([id])
+}
+
+model AIProviderKey {
+  id          Int               @id @default(autoincrement())
+  providerId  Int
+  key         String
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  lastHit     DateTime?
+  hitCount    Int               @default(0)
+  lastFailed  DateTime?
+  failedCount Int               @default(0)
+  isAvailable Boolean           @default(true)
+  provider    AIProvider        @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  errors      AIResponseError[]
+
+  @@index([isActive, isAvailable, lastHit])
+  @@index([providerId])
+}

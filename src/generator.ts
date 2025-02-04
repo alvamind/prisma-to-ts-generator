@@ -63,13 +63,26 @@ const genModel = (
   let content = model.comments?.map(c => `/// ${c}\n`).join('') || '';
 
   const fieldsContent = model.fields.map(field => {
-    let tsType = getTsType(field.type, field, model, allModels, enums, types, imports);
+    let tsType = getTsType(field.type, field, model, allModels, enums, types, imports); // imports set populated correctly for model/enum
     if (field.isArray) tsType = `${tsType}[]`;
     if (field.isOptional) tsType += ' | null';
     return `${field.comment ? `  ${field.comment}\n` : ''}  ${field.name}: ${tsType};`;
   }).join('\n');
 
-  const importStatements = Array.from(imports).map(i => `import type { ${i} } from './${i}';`).join('\n');
+  let importStatements = Array.from(imports).map(i => `import type { ${i} } from './${i}';`).join('\n');
+
+  // **INJECT HELPER TYPE IMPORTS** - Critical Addition
+  let needsDecimalImport = false;
+  let needsJsonImport = false;
+  model.fields.forEach(f => {
+    if (f.type === 'Decimal') needsDecimalImport = true;
+    if (f.type === 'Json') needsJsonImport = true;
+  });
+
+  if (needsDecimalImport) importStatements = `import type { DecimalJsLike } from './helper-types';\n${importStatements}`;
+  if (needsJsonImport) importStatements = `import type { JsonValueType } from './helper-types';\n${importStatements}`;
+
+
   content = `${importStatements}\n${content}export interface ${model.name} ${fieldsContent ? `{\n${fieldsContent}\n}` : `{}`}\n`;
 
   writeFileSync(path.join(outDir, `${model.name}.ts`), content.trim().trimEnd());
@@ -78,12 +91,12 @@ const genModel = (
 
 const typeMap: Record<string, string> = {
   String: 'string',
-  Decimal: 'string',
+  Decimal: 'DecimalJsLike',
   Int: 'number',
   Float: 'number',
   Boolean: 'boolean',
   DateTime: 'Date',
-  Json: 'any',
+  Json: 'JsonValueType',
   Bytes: 'Buffer',
   BigInt: 'bigint',
 };
@@ -99,12 +112,14 @@ const getTsType = (
   imports: Set<string>
 ): string => {
   const cleanType = type.replace('[]', '');
-  if (typeMap[cleanType]) return typeMap[cleanType];
+  if (typeMap[cleanType]) {
+    return typeMap[cleanType];
+  }
   if (enums.some(e => e.name === cleanType) || allModels.some(m => m.name === cleanType && !m.isType) || types.some(t => t.name === cleanType)) {
     if (cleanType !== currModel.name) imports.add(cleanType);
     return cleanType;
   }
-  return 'string'; // Default
+  return 'string';
 };
 
 
@@ -117,7 +132,7 @@ const getAllPrismaFiles = (dirPath: string): string[] => {
     const fileStat = statSync(filePath);
 
     if (fileStat.isDirectory()) {
-      prismaFiles = prismaFiles.concat(getAllPrismaFiles(filePath)); // Recursive call for subdirectories
+      prismaFiles = prismaFiles.concat(getAllPrismaFiles(filePath));
     } else if (file.endsWith('.prisma')) {
       prismaFiles.push(filePath);
     }
@@ -157,6 +172,83 @@ export const generate = (prismaSchemaPaths: string[]) => {
   const outDir = path.join(process.cwd(), 'output');
   mkdirSync(outDir, { recursive: true });
 
+  const typeDefinitionsContent = `
+import { Prisma } from '@prisma/client';
+
+/////////////////////////////////////////
+// JSON SECTION
+/////////////////////////////////////////
+
+export type NullableJsonInput =
+  | Prisma.JsonValue
+  | null
+  | 'JsonNull'
+  | 'DbNull'
+  | Prisma.NullTypes.DbNull
+  | Prisma.NullTypes.JsonNull;
+
+export const transformJsonNull = (v?: NullableJsonInput) => {
+  if (!v || v === 'DbNull') return Prisma.DbNull;
+  if (v === 'JsonNull') return Prisma.JsonNull;
+  return v;
+};
+
+export type JsonValueType =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValueType | undefined }
+  | JsonValueType[];
+
+export type NullableJsonValueType =
+  | JsonValueType
+  | 'DbNull'
+  | 'JsonNull'
+  | null;
+
+export type InputJsonValueType =
+  | string
+  | number
+  | boolean
+  | { toJSON: () => unknown }
+  | { [key: string]: InputJsonValueType | null }
+  | (InputJsonValueType | null)[];
+
+/////////////////////////////////////////
+// DECIMAL SECTION
+/////////////////////////////////////////
+
+export interface DecimalJsLike {
+  d: number[];
+  e: number;
+  s: number;
+  toFixed(): string;
+}
+
+export const DECIMAL_STRING_REGEX = /^(?:-?Infinity|NaN|-?(?:0[bB][01]+(?:\.[01]+)?(?:[pP][-+]?\d+)?|0[oO][0-7]+(?:\.[0-7]+)?(?:[pP][-+]?\d+)?|0[xX][\da-fA-F]+(?:\.[\da-fA-F]+)?(?:[pP][-+]?\d+)?|(?:\d+|\d*\.\d+)(?:[eE][-+]?\d+)?))$/;
+
+export const isValidDecimalInput = (
+  v?: null | string | number | DecimalJsLike
+): v is string | number | DecimalJsLike => {
+  if (v === undefined || v === null) return false;
+  return (
+    (typeof v === 'object' &&
+      'd' in v &&
+      'e' in v &&
+      's' in v &&
+      'toFixed' in v) ||
+    (typeof v === 'string' && DECIMAL_STRING_REGEX.test(v)) ||
+    typeof v === 'number'
+  );
+};
+
+`;
+  writeFileSync(path.join(outDir, 'helper-types.ts'), typeDefinitionsContent.trim() + '\n');
+
+
   allEnums.forEach((enumDef) => genEnum(enumDef, outDir));
-  [...allTypes, ...allModels].forEach(model => genModel(model, allModels, allEnums, allTypes, outDir));
+  [...allTypes, ...allModels].forEach(model => {
+    genModel(model, allModels, allEnums, allTypes, outDir);
+  });
 };

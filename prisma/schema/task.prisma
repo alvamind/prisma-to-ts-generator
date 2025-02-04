@@ -1,0 +1,100 @@
+model BlockTask {
+  id                 Int                @id @default(autoincrement())
+  start              DateTime?
+  end                DateTime?
+  timeEstimate       Int
+  recurrence         String? //cron notation
+  lastRun            DateTime?
+  nextRun            DateTime?
+  AITaskPrompt       String?
+  //================== One-to-One Relations ===================
+  block              Block              @relation(fields: [blockId], references: [id])
+  blockId            Int                @unique
+  blockHabit         BlockHabit?
+  //================== One-to-Many Relations ===================
+  isLifeGoalOf       UserMeta?
+  AITaskScheduleOf   Block              @relation(name: "AITaskScheduler", fields: [AITaskScheduleOfId], references: [id])
+  AITaskScheduleOfId Int
+  onTimeBlock        TimeBlock?         @relation(fields: [onTimeBlockId], references: [id])
+  onTimeBlockId      Int?               @unique
+  //================== Many-to-Many Relations ===================
+  reminders          TaskReminder[]
+  statuses           TaskStatus[]
+  customFields       DynamicAttribute[]
+  waitingFor         TaskDependency[]   @relation("WaitingTasks")
+  blockingFor        TaskDependency[]   @relation("BlockingTasks")
+}
+
+model BlockTaskStatus {
+  id          Int                @id @default(autoincrement())
+  name        String
+  type        ProgressStatusEnum @default(OPEN)
+  timeSpent   Int?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  //================== One-to-Many Relations ===================
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id])
+  workspaceId Int
+  //================== Many-to-Many Relations ===================
+  tasks       TaskStatus[]
+
+  @@unique([name, workspaceId])
+}
+
+model TaskReminder {
+  id        Int       @id @default(autoincrement())
+  schedule  String // cron expression for scheduling
+  message   String?
+  isRead    Boolean   @default(false)
+  lastRun   DateTime?
+  nextRun   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  //================== Many-to-One Relations ===================
+  task      BlockTask @relation(fields: [taskId], references: [id])
+  taskId    Int
+}
+
+//================== Junction Table ===================
+model TaskStatus {
+  id        Int             @id @default(autoincrement())
+  taskId    Int
+  statusId  Int
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  //================== Many-to-One Relations ===================
+  task      BlockTask       @relation(fields: [taskId], references: [id])
+  status    BlockTaskStatus @relation(fields: [statusId], references: [id])
+
+  @@unique([taskId, statusId])
+}
+
+//================== Junction Table ===================
+model TaskDependency {
+  id             Int       @id @default(autoincrement())
+  waitingTaskId  Int
+  blockingTaskId Int
+  //================== Many-to-One Relations ===================
+  waitingTask    BlockTask @relation("WaitingTasks", fields: [waitingTaskId], references: [id])
+  blockingTask   BlockTask @relation("BlockingTasks", fields: [blockingTaskId], references: [id])
+
+  @@unique([waitingTaskId, blockingTaskId])
+}
+
+model TimeBlock {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String?
+  startTime   DateTime
+  endTime     DateTime // End time of the block
+  dayOfWeek   DayOfWeekEnum // Day of the week (e.g., Monday, Tuesday)
+  isRecurring Boolean       @default(false) // Recurring block (e.g., every Monday)
+  recurrence  String? // Cron expression for recurring blocks
+  userId      Int // User who owns the block
+  user        User          @relation(fields: [userId], references: [id])
+  tasks       BlockTask[] // Tasks assigned to this block
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([userId, dayOfWeek, startTime, endTime]) // Ensure no overlapping blocks
+}

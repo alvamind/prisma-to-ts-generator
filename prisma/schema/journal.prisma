@@ -1,0 +1,6 @@
+model BlockJournal {
+  id           Int                @id @default(autoincrement())
+  block        Block              @relation(fields: [blockId], references: [id])
+  blockId      Int                @unique
+  customFields DynamicAttribute[]
+}

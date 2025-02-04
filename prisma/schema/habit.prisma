@@ -1,0 +1,7 @@
+model BlockHabit {
+  id          Int                @id @default(autoincrement())
+  // Relation to BlockTask for tracking
+  blockTask   BlockTask          @relation(fields: [blockTaskId], references: [id])
+  blockTaskId Int                @unique
+  status      ProgressStatusEnum @default(OPEN)
+}

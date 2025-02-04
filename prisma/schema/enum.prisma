@@ -1,0 +1,114 @@
+enum UserTypeEnum {
+  AI_AGENT
+  COACH
+  USER
+  SUPERUSER
+}
+
+enum MetaPhysicTypeEnum {
+  BAZI
+  HOROSCOPE
+}
+
+enum DataTypeEnum {
+  STRING
+  INT
+  BOOLEAN
+  DATE
+}
+
+enum BlockTypeEnum {
+  TASK
+  DOCUMENT
+  JOURNAL
+  CALORIE
+  HABIT
+  RITUAL
+}
+
+enum ProgressStatusEnum {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  CLOSED
+  FAILED
+}
+
+enum GenderEnum {
+  MALE
+  FEMALE
+}
+
+enum RelationshipEnum {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  SEPARATED
+  DOMESTIC
+  OTHER
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum WorkspaceTypeEnum {
+  WORK
+  LIFE
+}
+
+enum MimeTypeEnum {
+  UNKNOWN
+  MP4
+  JPG
+  PNG
+  PDF
+  DOC
+  DOCX
+  XLS
+  XLSX
+  CSV
+  PPT
+  PPTX
+  ZIP
+  RAR
+  TXT
+  JSON
+  XML
+  HTML
+  CSS
+  JS
+  TS
+
+  @@map("FileTypes")
+}
+
+enum FileTypeEnum {
+  REFERENCE
+}
+
+enum ResponseStatusEnum {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  SKIPPED
+  CANCELLED
+  TIMEOUT
+  RETRYING
+}
+
+enum DayOfWeekEnum {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}

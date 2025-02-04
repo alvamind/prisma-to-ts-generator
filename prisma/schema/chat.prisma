@@ -1,0 +1,32 @@
+model ChatRoom {
+  //-------------------------- scalars --------------------------------
+  id           Int       @id @default(autoincrement())
+  name         String
+  //-------------------------- m relations --------------------------------
+  participants User[]
+  messages     Message[]
+
+  @@map("ChatRooms")
+}
+
+model Message {
+  //-------------------------- scalars --------------------------------
+  id           Int         @id @default(autoincrement())
+  isAIMessage  Boolean     @default(false)
+  content      String? //markdown, Only for human messages
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  //-------------------------- 1 relations --------------------------------
+  sender       User        @relation("MessageSender", fields: [senderId], references: [id])
+  senderId     Int
+  replyTo      Message?    @relation("MessageReplyTo", fields: [replyToId], references: [id])
+  replyToId    Int?
+  chatRoom     ChatRoom?   @relation(fields: [chatRoomId], references: [id])
+  chatRoomId   Int?
+  aiResponse   AIResponse? @relation(fields: [aiResponseId], references: [id])
+  aiResponseId Int?        @unique
+  //-------------------------- m relations --------------------------------
+  replies      Message[]   @relation("MessageReplyTo")
+
+  @@map("Messages")
+}

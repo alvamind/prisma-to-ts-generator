@@ -1,0 +1,53 @@
+model Block {
+  id              Int           @id @default(autoincrement())
+  name            String
+  description     String?
+  type            BlockTypeEnum @default(DOCUMENT)
+  content         String?
+  position        Int?
+  isTemplate      Boolean?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime?     @updatedAt
+  deletedAt       DateTime?
+  //================== One to One Relations ==================
+  image           File?         @relation(fields: [imageId], references: [id])
+  imageId         Int?          @unique
+  blockTask       BlockTask?
+  blockJournal    BlockJournal?
+  blockCalorie    BlockCalorie?
+  blockRitual     BlockRitual?
+  createdByUser   User          @relation(fields: [createdByUserId], references: [id])
+  createdByUserId Int
+  blockFolder     Folder?       @relation(fields: [blockFolderId], references: [id])
+  blockFolderId   Int?
+  parentBlock     Block?        @relation("BlockToBlock", fields: [parentBlockId], references: [id])
+  parentBlockId   Int?
+  //================== Many to Many Relations ==================
+  measurements    Measurement[]
+  tags            BlockTag[]
+  childBlocks     Block[]       @relation("BlockToBlock")
+  onWorkspaces    Workspace[]
+  AITaskSchedules BlockTask[]   @relation(name: "AITaskScheduler")
+
+  // Add a compound unique constraint to ensure unique positions within each parent block
+  @@unique([parentBlockId, position])
+  // Add another compound unique constraint for blocks in folders
+  @@unique([blockFolderId, position])
+}
+
+model BlockTag {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  color       String?
+  icon        String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  //================== One to One Relations ==================
+  parentTag   BlockTag?  @relation("TagHierarchy", fields: [parentTagId], references: [id])
+  parentTagId Int?
+  block       Block      @relation(fields: [blockId], references: [id])
+  blockId     Int
+  //================== Many to Many Relations ==================
+  childTags   BlockTag[] @relation("TagHierarchy")
+}

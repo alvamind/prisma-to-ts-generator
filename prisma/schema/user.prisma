@@ -1,0 +1,129 @@
+model User {
+  //================== Basic Fields ==================
+  id                 Int               @id @default(autoincrement())
+  name               String
+  email              String            @unique
+  emailVerifiedAt    DateTime? /// @prismabox.create.input.hide
+  password           String
+  phoneNumber        String
+  whatsappVerifiedAt DateTime? /// @prismabox.create.input.hide
+  isActive           Boolean           @default(true) /// @prismabox.create.input.hide
+  lastLoginAt        DateTime? /// @prismabox.hidden
+  createdAt          DateTime          @default(now()) /// @prismabox.create.input.hide
+  updatedAt          DateTime?         @updatedAt /// @prismabox.create.input.hide
+  deletedAt          DateTime? /// @prismabox.create.input.hide
+  //================== One to One Relations ==================
+  userType           UserTypeEnum      @default(USER) /// @prismabox.create.input.hide
+  profileImage       File?             @relation(fields: [profileImageId], references: [id])
+  profileImageId     Int?              @unique
+  meta               UserMeta          @relation(fields: [metaId], references: [id])
+  metaId             Int               @unique
+  systemPref         SystemPreference? @relation(fields: [systemPrefId], references: [id]) /// @prismabox.create.input.hide
+  systemPrefId       Int?              @unique
+  //================== Many to Many Relations ==================
+  blocksCreated      Block[] /// @prismabox.create.input.hide
+  measurements       Measurement[] /// @prismabox.create.input.hide
+  sessions           Session[] /// @prismabox.create.input.hide
+  onRituals          BlockRitual[] /// @prismabox.create.input.hide
+  onWorkspace        Workspace[] /// @prismabox.create.input.hide
+  onCategories       RitualCategory[] /// @prismabox.create.input.hide
+  onAIResponses      AIResponse[] /// @prismabox.create.input.hide
+  onTimeBlocks       TimeBlock[] /// @prismabox.create.input.hide
+  messageSender      Message[]         @relation("MessageSender") /// @prismabox.create.input.hide
+  onChatRoom         ChatRoom[] /// @prismabox.create.input.hide
+}
+
+model UserMeta {
+  //================== Basic Fields ==================
+  id             Int              @id @default(autoincrement())
+  dateOfBirth    DateTime
+  gender         GenderEnum
+  relationship   RelationshipEnum
+  //================== One to One Relations ==================
+  user           User?
+  lifeGoal       BlockTask?       @relation(fields: [lifeGoalItemId], references: [id])
+  lifeGoalItemId Int?             @unique
+  character      UserCharacter?   @relation(fields: [characterId], references: [id]) /// @prismabox.create.input.hide
+  characterId    Int?             @unique
+  calorieGoal    CalorieGoal? /// @prismabox.create.input.hide
+  //================== One to Many Relations ==================
+  metaphysics    UserMetaphysic[] /// @prismabox.create.input.hide
+  calories       BlockCalorie[] /// @prismabox.create.input.hide
+  favoriteFoods  FavoriteFood[] /// @prismabox.create.input.hide
+}
+
+model UserCharacter {
+  //================== Basic Fields ==================
+  id                    Int       @id @default(autoincrement())
+  mbti                  String
+  enneagram             String
+  bigFiveScores         Json
+  archetype             String
+  personalityTraits     Json
+  values                String[]
+  interests             String[]
+  skills                String[]
+  fears                 String[]
+  motivations           String[]
+  habits                String[]
+  relationships         String[]
+  backstory             String
+  occupation            String
+  education             String
+  // Learning & Cognition
+  learningStyle         String
+  cognitiveStyle        String
+  creativityIndex       Int
+  problemSolvingStyle   String
+  // Communication & Social
+  communicationStyle    String
+  socialStyle           String
+  languageStyle         String
+  // Emotional & Behavioral
+  emotionalPatterns     String[]
+  emotionalIntelligence Int
+  empathyLevel          Int
+  selfAwareness         Int
+  // Adaptability & Resilience
+  adaptabilityScore     Int
+  resilienceLevel       Int
+  copingMechanisms      String[]
+  stressResponse        String
+  stressManagementLevel Int
+  // Work & Leadership
+  workStyle             String
+  leadershipStyle       String
+  decisionMakingStyle   String
+  conflictStyle         String
+  // Background & Experience
+  culturalBackground    String?
+  lifeExperiences       String[]
+  beliefs               String[]
+  growthMindset         Int
+  //================== One to One Relations ==================
+  userMeta              UserMeta?
+}
+
+model UserMetaphysic {
+  //================== Basic Fields ==================
+  id         Int                @id @default(autoincrement())
+  name       String
+  value      Json
+  type       MetaPhysicTypeEnum
+  //================== One to One Relations ==================
+  userMeta   UserMeta?          @relation(fields: [userMetaId], references: [id])
+  userMetaId Int?
+}
+
+model Session {
+  //================== Basic Fields ==================
+  id           String   @id @default(uuid())
+  token        String   @unique
+  device       String?
+  ipAddress    String?
+  lastActivity DateTime @default(now())
+  expiresAt    DateTime
+  //================== One to One Relations ==================
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+}

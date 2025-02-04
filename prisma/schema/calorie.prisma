@@ -1,0 +1,47 @@
+model BlockCalorie {
+  id          Int      @id @default(autoincrement())
+  calories    Decimal  @db.Decimal(10, 2) // Jumlah kalori
+  servingSize Decimal  @db.Decimal(10, 2) // Ukuran porsi dalam gram
+  mealType    MealType // Jenis waktu makan
+  block       Block    @relation(fields: [blockId], references: [id]) // Opsional, jika ingin menghubungkan dengan Block
+  blockId     Int      @unique
+  // Nutrisi tambahan (opsional)
+  protein     Decimal? @db.Decimal(10, 2) // dalam gram
+  carbs       Decimal? @db.Decimal(10, 2) // dalam gram
+  fat         Decimal? @db.Decimal(10, 2) // dalam gram
+  fiber       Decimal? @db.Decimal(10, 2) // dalam gram
+  sugar       Decimal? @db.Decimal(10, 2) // dalam gram
+  // ==================== Many to One Relationships ====================
+  userMeta    UserMeta @relation(fields: [userMetaId], references: [id])
+  userMetaId  Int
+}
+
+model CalorieGoal {
+  id             Int      @id @default(autoincrement())
+  targetCalories Decimal  @db.Decimal(10, 2)
+  userMeta       UserMeta @relation(fields: [userMetaId], references: [id])
+  userMetaId     Int      @unique
+  targetProtein  Decimal? @db.Decimal(10, 2)
+  targetCarbs    Decimal? @db.Decimal(10, 2)
+  targetFat      Decimal? @db.Decimal(10, 2)
+  targetFiber    Decimal? @db.Decimal(10, 2)
+  createdAt      DateTime @default(now())
+}
+
+model FavoriteFood {
+  id          Int      @id @default(autoincrement())
+  foodName    String
+  calories    Decimal  @db.Decimal(10, 2)
+  servingSize Decimal  @db.Decimal(10, 2)
+  protein     Decimal? @db.Decimal(10, 2)
+  carbs       Decimal? @db.Decimal(10, 2)
+  fat         Decimal? @db.Decimal(10, 2)
+  fiber       Decimal? @db.Decimal(10, 2)
+  sugar       Decimal? @db.Decimal(10, 2)
+  userMeta    UserMeta @relation(fields: [userMetaId], references: [id])
+  userMetaId  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userMetaId, foodName]) // Tidak boleh ada duplikasi makanan favorit untuk user yang sama
+}

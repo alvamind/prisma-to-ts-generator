@@ -1,0 +1,34 @@
+model SystemPreference {
+  id                   Int           @id @default(autoincrement())
+  theme                String        @default("light")
+  fontSize             Int           @default(14)
+  fontFamily           String        @default("Arial")
+  colorScheme          String        @default("default")
+  soundEnabled         Boolean       @default(true)
+  notificationsEnabled Boolean       @default(true)
+  language             String        @default("en")
+  timeFormat           String        @default("24h")
+  dateFormat           String        @default("YYYY-MM-DD")
+  timezone             String        @default("UTC")
+  compactView          Boolean       @default(false)
+  preferredLanguage    String        @default("en")
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  user                 User?
+  aiPreference         AIPreference?
+}
+
+model AIPreference {
+  id                 Int              @id @default(autoincrement())
+  civilLevel         Int              @default(5)
+  conversationStyle  String
+  contextLengthLevel Int              @default(5)
+  vocabularyLevel    Int              @default(5)
+  humorLevel         Int              @default(5)
+  empathyLevel       Int              @default(5)
+  formalityLevel     Int              @default(5)
+  creativityLevel    Int              @default(5)
+  proactiveLevel     Int              @default(5)
+  systemPreference   SystemPreference @relation(fields: [systemPreferenceId], references: [id])
+  systemPreferenceId Int              @unique
+}
