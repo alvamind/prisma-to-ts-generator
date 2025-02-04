@@ -20,8 +20,16 @@ const nestedSchemaPath = path.join(nestedSchemaDir, 'nested.prisma');
 
 // Helper function with precise reading
 const readOutput = (fileName: string) => {
-  const filePath = path.join(outputDir, fileName);
+  const filePath = path.join(outputDir, 'ts', 'model', fileName); // Adjusted path for multi-file output structure
   return existsSync(filePath) ? readFileSync(filePath, 'utf-8') : null;
+};
+const readEnumOutput = (fileName: string) => {
+    const filePath = path.join(outputDir, 'ts', 'enum', fileName); // Adjusted path for multi-file output structure
+    return existsSync(filePath) ? readFileSync(filePath, 'utf-8') : null;
+};
+const readTypeOutput = (fileName: string) => {
+    const filePath = path.join(outputDir, 'ts', 'model', fileName); // Types are in model folder as interfaces
+    return existsSync(filePath) ? readFileSync(filePath, 'utf-8') : null;
 };
 
 // Helper function for writing test schemas
@@ -106,12 +114,12 @@ describe('TS Interface Generator', () => {
 
 
   it('should generate exact User interface structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
 
     expect(userSchema).toContain(
-      `import type { Post } from './Post';
-import type { Profile } from './Profile';
+      `import type { Post } from '../model/Post';
+import type { Profile } from '../model/Profile';
 export interface User {
   id: number;
   email: string;
@@ -124,11 +132,11 @@ export interface User {
   });
 
   it('should generate exact Post interface structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const postSchema = readOutput('Post.ts')?.trim();
 
     expect(postSchema).toContain(
-      `import type { User } from './User';
+      `import type { User } from '../model/User';
 export interface Post {
   id: number;
   title: string;
@@ -140,11 +148,11 @@ export interface Post {
   });
 
   it('should generate exact Profile interface structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const profileSchema = readOutput('Profile.ts')?.trim();
 
     expect(profileSchema).toContain(
-      `import type { User } from './User';
+      `import type { User } from '../model/User';
 export interface Profile {
   id: number;
   bio: string | null;
@@ -155,8 +163,8 @@ export interface Profile {
   });
 
   it('should generate exact UserRole enum structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
-    const enumSchema = readOutput('UserRole.ts')?.trim();
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    const enumSchema = readEnumOutput('UserRole.ts')?.trim();
 
     expect(enumSchema).toBe(
       `export type UserRole = 'USER' | 'ADMIN';`
@@ -164,8 +172,8 @@ export interface Profile {
   });
 
   it('should generate exact CompositeType structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
-    const compositeSchema = readOutput('CompositeType.ts')?.trim();
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    const compositeSchema = readTypeOutput('CompositeType.ts')?.trim();
 
     expect(compositeSchema).toBe(
       `export interface CompositeType {
@@ -176,11 +184,11 @@ export interface Profile {
   });
 
   it('should generate exact Category structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const categorySchema = readOutput('Category.ts')?.trim();
 
     expect(categorySchema).toContain(
-      `import type { Product } from './Product';
+      `import type { Product } from '../model/Product';
 export interface Category {
   id: number;
   name: string;
@@ -190,11 +198,11 @@ export interface Category {
   });
 
   it('should generate exact Product structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const productSchema = readOutput('Product.ts')?.trim();
 
     expect(productSchema).toContain(
-      `import type { Category } from './Category';
+      `import type { Category } from '../model/Category';
 export interface Product {
   id: number;
   name: string;
@@ -206,8 +214,8 @@ export interface Product {
 
 
   it('should generate exact Status enum structure', () => {
-    generate([testSchemaPath1, testSchemaPath2]);
-    const enumSchema = readOutput('Status.ts')?.trim();
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    const enumSchema = readEnumOutput('Status.ts')?.trim();
     expect(enumSchema).toBe(
       `export type Status = 'ACTIVE' | 'INACTIVE';`
     );
@@ -217,7 +225,7 @@ export interface Product {
     setupTestSchema(`model BigIntModel {
       id BigInt @id
       }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('BigIntModel.ts')?.trim()).toInclude('id: bigint;');
   });
 
@@ -226,7 +234,7 @@ export interface Product {
     setupTestSchema(`model BytesModel {
       data Bytes
       }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('BytesModel.ts')?.trim()).toInclude('data: Buffer;');
   });
 
@@ -239,7 +247,7 @@ export interface Product {
         createdAt DateTime @default(now())
       }
     `, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('Defaults.ts')?.trim();
     expect(schema).toInclude('id: string;');
     expect(schema).toInclude('active: boolean;');
@@ -251,8 +259,8 @@ export interface Product {
     setupTestSchema(`model JsonModel {
       data Json
       }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
-    expect(readOutput('JsonModel.ts')?.trim()).toInclude('data: any;');
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    expect(readOutput('JsonModel.ts')?.trim()).toInclude('data: JsonValueType;');
   });
 
   // 5. UpdatedAt Attribute
@@ -260,7 +268,7 @@ export interface Product {
     setupTestSchema(`model Timestamps {
       updatedAt DateTime @updatedAt
       }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('Timestamps.ts')?.trim()).toInclude('updatedAt: Date;');
   });
 
@@ -273,7 +281,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('Mapped.ts')?.trim();
     expect(schema).toInclude('id: number;');
     expect(schema).toInclude('name: string;');
@@ -289,7 +297,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('Employee.ts')?.trim();
     expect(schema).toInclude('manager: Employee | null;');
     expect(schema).toInclude('reports: Employee[];');
@@ -305,7 +313,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('CompoundId.ts')?.trim()).toBe(
       `export interface CompoundId {
   a: number;
@@ -324,7 +332,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('Indexed.ts')?.trim()).not.toInclude('@@index');
   });
 
@@ -337,7 +345,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('NullOptional.ts')?.trim();
     expect(schema).toInclude('opt: string | null;');
     expect(schema).toInclude('nul: string | null;');
@@ -355,7 +363,7 @@ export interface Product {
         roles Role[]
       }
     `, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('roles: Role[];');
   });
@@ -365,8 +373,8 @@ export interface Product {
     setupTestSchema(`model Money {
       amount Decimal
       }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
-    expect(readOutput('Money.ts')?.trim()).toInclude('amount: string;');
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    expect(readOutput('Money.ts')?.trim()).toInclude('amount: DecimalJsLike;');
   });
 
   // 13. Unsupported Types
@@ -374,7 +382,7 @@ export interface Product {
     setupTestSchema(`model Unsupported {
       data UnsupportedType
       }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('Unsupported.ts')?.trim()).toInclude('data: string;');
   });
 
@@ -388,8 +396,8 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
-    expect(readOutput('MappedEnum.ts')?.trim()).toBe(
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    expect(readEnumOutput('MappedEnum.ts')?.trim()).toBe(
       `export type MappedEnum = 'A' | 'B';`
     );
   });
@@ -404,7 +412,7 @@ export interface Product {
         }
       `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('Commented.ts')?.trim();
     expect(schema).toContain('/// User model comment');
     expect(schema).toContain('/// Field comment');
@@ -420,8 +428,8 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
-    expect(readOutput('Address.ts')?.trim()).toBe(
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    expect(readTypeOutput('Address.ts')?.trim()).toBe(
       `export interface Address {
   street: string;
   city: string;
@@ -440,7 +448,7 @@ export interface Product {
       a A @relation(fields: [aId], references: [id])
       aId Int }
     `, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const bSchema = readOutput('B.ts')?.trim();
     expect(bSchema).toInclude('a: A;');
   });
@@ -450,7 +458,7 @@ export interface Product {
     setupTestSchema(`model Reserved {
       delete Boolean
       }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('Reserved.ts')?.trim()).toInclude('delete: boolean;');
   });
 
@@ -458,7 +466,7 @@ export interface Product {
   it('should handle empty models', () => {
     setupTestSchema(`model Empty {
 }`, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('Empty.ts')?.trim()).toBe(
       `export interface Empty {}`
     );
@@ -478,8 +486,8 @@ export interface Product {
         lng Float
       }
     `, testSchemaPath1);
-    generate([testSchemaPath1, testSchemaPath2]);
-    const addressSchema = readOutput('Address.ts')?.trim();
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
+    const addressSchema = readTypeOutput('Address.ts')?.trim();
     expect(addressSchema).toInclude('coordinates: Coordinate;');
   });
 
@@ -497,7 +505,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const locationSchema = readOutput('Location.ts')?.trim();
     expect(locationSchema).toInclude('points: Coordinate[];');
   });
@@ -516,7 +524,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('address: Address | null;');
   });
@@ -535,7 +543,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('email: string;');
   });
@@ -558,7 +566,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('writtenPosts: Post[];');
     expect(userSchema).toInclude('reviewedPosts: Post[];');
@@ -575,7 +583,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('MixedOptionalNullable.ts')?.trim();
     expect(schema).toInclude('optionalField: string | null;');
     expect(schema).toInclude('nullableField: string | null;');
@@ -598,7 +606,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('status: Status;');
     expect(userSchema).toInclude('previousStatuses: Status[];');
@@ -613,7 +621,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('NoRelations.ts')?.trim();
     expect(schema).toInclude(
       `export interface NoRelations {
@@ -633,7 +641,7 @@ export interface Product {
     }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('AllOptional.ts')?.trim();
     expect(schema).toBe(
       `export interface AllOptional {
@@ -654,7 +662,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('AllRequired.ts')?.trim();
     expect(schema).toBe(
       `export interface AllRequired {
@@ -676,7 +684,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('MixedArrays.ts')?.trim();
     expect(schema).toInclude('names: string[];');
     expect(schema).toInclude('ages: number[];');
@@ -694,7 +702,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('ComplexDefaults.ts')?.trim();
     expect(schema).toInclude('id: number;');
     expect(schema).toInclude('createdAt: Date;');
@@ -722,7 +730,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('role: Role;');
     expect(userSchema).toInclude('status: Status;');
@@ -748,7 +756,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('address: Address;');
     expect(userSchema).toInclude('contact: Contact;');
@@ -774,7 +782,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('address: Address;');
   });
@@ -789,7 +797,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('OptionalArrays.ts')?.trim();
     expect(schema).toInclude('names: string[];');
     expect(schema).toInclude('ages: number[];');
@@ -805,7 +813,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('NullableArrays.ts')?.trim();
     expect(schema).toInclude('names: string[] | null;');
     expect(schema).toInclude('ages: number[] | null;');
@@ -821,7 +829,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const schema = readOutput('MixedArrays.ts')?.trim();
     expect(schema).toInclude('optionalNames: string[];');
     expect(schema).toInclude('nullableAges: number[] | null;');
@@ -849,7 +857,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('posts: Post[];');
     const postSchema = readOutput('Post.ts')?.trim();
@@ -882,7 +890,7 @@ export interface Product {
       }
     `, testSchemaPath1);
 
-    generate([testSchemaPath1, testSchemaPath2]);
+    generate({ dirOrFilesPath: [testSchemaPath1, testSchemaPath2], outputPath: 'output/ts', multiFiles: true });
     const userSchema = readOutput('User.ts')?.trim();
     expect(userSchema).toInclude('role: Role;');
     expect(userSchema).toInclude('address: Address;');
@@ -891,7 +899,7 @@ export interface Product {
 
   // 41. Should handle directory path
   it('should handle directory path and nested schema', () => {
-    generate([testSchemaDir]);
+    generate({ dirOrFilesPath: [testSchemaDir], outputPath: 'output/ts', multiFiles: true });
     expect(readOutput('NestedModel.ts')?.trim()).toInclude(`export interface NestedModel`);
     expect(readOutput('User.ts')?.trim()).toInclude(`export interface User`);
     expect(readOutput('Category.ts')?.trim()).toInclude(`export interface Category`);
@@ -899,7 +907,7 @@ export interface Product {
 
   // 42. Should handle mixed file and directory paths
   it('should handle mixed file and directory paths', () => {
-    generate([testSchemaDir, testSchemaPath2]); // testSchemaPath2 is redundant but should not break
+    generate({ dirOrFilesPath: [testSchemaDir, testSchemaPath2], outputPath: 'output/ts', multiFiles: true }); // testSchemaPath2 is redundant but should not break
     expect(readOutput('NestedModel.ts')?.trim()).toInclude(`export interface NestedModel`);
     expect(readOutput('User.ts')?.trim()).toInclude(`export interface User`);
     expect(readOutput('Category.ts')?.trim()).toInclude(`export interface Category`);
