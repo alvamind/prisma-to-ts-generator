@@ -14,6 +14,8 @@ const outputDir = path.join(process.cwd(), 'output');
 const testSchemaDir = path.join(process.cwd(), 'test-schema');
 const testSchemaPath1 = path.join(testSchemaDir, 'test1.prisma');
 const testSchemaPath2 = path.join(testSchemaDir, 'test2.prisma');
+const nestedSchemaDir = path.join(testSchemaDir, 'nested');
+const nestedSchemaPath = path.join(nestedSchemaDir, 'nested.prisma');
 
 
 // Helper function with precise reading
@@ -31,6 +33,8 @@ describe('TS Interface Generator', () => {
   beforeAll(async () => {
     await $`clear`;
     mkdirSync(testSchemaDir, { recursive: true });
+    mkdirSync(nestedSchemaDir, { recursive: true });
+
     setupTestSchema(`
             model User {
                 id        Int      @id @default(autoincrement())
@@ -85,6 +89,13 @@ describe('TS Interface Generator', () => {
                 INACTIVE
             }
         `, testSchemaPath2);
+
+    setupTestSchema(`
+            model NestedModel {
+                id Int @id
+                value String
+            }
+        `, nestedSchemaPath);
   });
 
 
@@ -878,5 +889,20 @@ export interface Product {
     expect(userSchema).toInclude('contact: Contact;');
   });
 
+  // 41. Should handle directory path
+  it('should handle directory path and nested schema', () => {
+    generate([testSchemaDir]);
+    expect(readOutput('NestedModel.ts')?.trim()).toInclude(`export interface NestedModel`);
+    expect(readOutput('User.ts')?.trim()).toInclude(`export interface User`);
+    expect(readOutput('Category.ts')?.trim()).toInclude(`export interface Category`);
+  });
 
+  // 42. Should handle mixed file and directory paths
+  it('should handle mixed file and directory paths', () => {
+    generate([testSchemaDir, testSchemaPath2]); // testSchemaPath2 is redundant but should not break
+    expect(readOutput('NestedModel.ts')?.trim()).toInclude(`export interface NestedModel`);
+    expect(readOutput('User.ts')?.trim()).toInclude(`export interface User`);
+    expect(readOutput('Category.ts')?.trim()).toInclude(`export interface Category`);
+    expect(readOutput('Product.ts')?.trim()).toInclude(`export interface Product`);
+  });
 });
