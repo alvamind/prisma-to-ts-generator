@@ -1,13 +1,3 @@
-import { generate } from "./generator";
-
-generate({
-    dirOrFilesPath: ['prisma/schema'],
-    outputPath: 'output/ts',
-    multiFiles: true,
-    modelVariants: [
-        'Regular',
-        'Partial',
-        'CreateInput',
-        'UpdateInput'
-    ],
-});
+// index.ts
+export { generate } from './generator';
+export * from './types'; // Optionally export types for external use
