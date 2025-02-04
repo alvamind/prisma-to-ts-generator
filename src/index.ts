@@ -6,10 +6,6 @@ generate({
   multiFiles: true,
   modelVariants: [
     'Regular',
-    'Optional',
-    'WithRelations',
-    'OptionalRelations',
-    'PartialRelations',
-    'OptionalFullRelations',
-  ], // Generate all variants
+    'Partial'
+  ],
 });
