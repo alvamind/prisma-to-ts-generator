@@ -1,0 +1,4 @@
+model NestedModel {
+id Int @id
+value String
+}

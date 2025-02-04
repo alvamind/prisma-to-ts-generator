@@ -1,4 +1,3 @@
-/* src/generator.ts - FINAL DEBUGGING VERSION 12 - CORRECTED IMPORT PATHS - FILE RELATIVE & NO EXTENSION - HELPER & MODEL PATHS */
 import { getSchema } from '@mrleebo/prisma-ast';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, promises as fsPromises, existsSync } from 'fs';
 import path from 'path';
@@ -168,7 +167,7 @@ const genModel = (
 
 
     if (multiFiles) {
-        importStatements = Array.from(imports).map(originalImportPath => {
+        const importStatementsArray = Array.from(imports).map(originalImportPath => {
             let targetDirPath;
             let processedImportPath = originalImportPath;
 
@@ -184,92 +183,34 @@ const genModel = (
             }
 
             const targetFilePath = path.join(targetDirPath, `${path.basename(processedImportPath)}.ts`);
-            const rawRelativePath = path.relative(modelFilePath, targetFilePath); // Relative from model file
-            let relativePath = rawRelativePath.replace(/\\/g, '/');
 
-            // Remove .ts extension and prefixes from the final import path
-            relativePath = relativePath.replace(/\.ts$/, '');
-            relativePath = relativePath.replace(/^(enum\/|model\/|helper\/)/, ''); // Remove prefixes if any remain
+            // Calculate relative path
+            const relativePath = path.relative(path.dirname(modelFilePath), targetFilePath).replace(/\\/g, '/');
 
-            return `import type { ${path.basename(processedImportPath)} } from '${relativePath}';`;
-        }).join('\n');
+            return `import type { ${path.basename(processedImportPath)} } from '${relativePath.startsWith('.') ? relativePath : './' + relativePath}';`;
+        });
 
 
         if (variant !== 'Partial' && variant !== 'CreateInput' && variant !== 'UpdateInput') {
             const helperTypesFilePath = path.join(helperOutputDir, 'helper-types.ts');
-            const modelFilesPath = path.join(modelOutputDir)
-            const relativeHelperPathRaw = path.relative(modelFilesPath, helperTypesFilePath);
-            let relativeHelperPath = relativeHelperPathRaw.replace(/\\/g, '/').replace(/\.ts$/, ''); // No .ts extension
-            relativeHelperPath = relativeHelperPath.replace(/^(enum\/|model\/|helper\/)/, ''); // Remove prefixes
+            const relativeHelperPath = path.relative(path.dirname(modelFilePath), helperTypesFilePath).replace(/\\/g, '/');
 
             helperImports = [
-                needsDecimal ? `import type { DecimalJsLike } from '${relativeHelperPath}';` : '',
-                needsJson ? `import type { JsonValueType } from '${relativeHelperPath}';` : '',
+                needsDecimal ? `import type { DecimalJsLike } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
+                needsJson ? `import type { JsonValueType } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
             ].filter(Boolean).join('\n');
-            importStatements = `${helperImports}\n${importStatements}`;
+            importStatements = `${helperImports}\n${importStatementsArray.join('\n')}`;
 
-               importStatements = Array.from(imports).map(originalImportPath => {
-            let targetDirPath;
-            let processedImportPath = originalImportPath;
-
-            if (originalImportPath.startsWith('enum/')) {
-                targetDirPath = enumOutputDir;
-                processedImportPath = originalImportPath.replace('enum/', '');
-            } else if (originalImportPath.startsWith('model/')) {
-                targetDirPath = modelOutputDir;
-                processedImportPath = originalImportPath.replace('model/', '');
-            } else {
-                targetDirPath = helperOutputDir; // Corrected: Assuming helper import
-                processedImportPath = originalImportPath.replace('helper/', ''); // Corrected: Assuming helper import
-            }
-
-            const targetFilePath = path.join(targetDirPath, `${path.basename(processedImportPath)}.ts`);
-            const rawRelativePath = path.relative(modelFilesPath, targetFilePath); // Relative from model file
-            let relativePath = rawRelativePath.replace(/\\/g, '/');
-
-            // Remove .ts extension and prefixes from the final import path
-            relativePath = relativePath.replace(/\.ts$/, '');
-            relativePath = relativePath.replace(/^(enum\/|model\/|helper\/)/, ''); // Remove prefixes if any remain
-
-            return `import type { ${path.basename(processedImportPath)} } from '${relativePath}';`;
-        }).join('\n');
         } else {
             const helperTypesFilePath = path.join(helperOutputDir, 'helper-types.ts');
-             const modelFilesPath = path.join(modelOutputDir)
-            const relativeHelperPathRaw = path.relative(modelFilesPath, helperTypesFilePath);
-            let relativeHelperPath = relativeHelperPathRaw.replace(/\\/g, '/').replace(/\.ts$/, ''); // No .ts extension
-             relativeHelperPath = relativeHelperPath.replace(/^(enum\/|model\/|helper\/)/, ''); // Remove prefixes
+            const relativeHelperPath = path.relative(path.dirname(modelFilePath), helperTypesFilePath).replace(/\\/g, '/');
 
             helperImports = [
-                needsDecimal ? `import type { DecimalJsLike } from '${relativeHelperPath}';` : '',
-                needsJson ? `import type { JsonValueType } from '${relativeHelperPath}';` : '',
+                needsDecimal ? `import type { DecimalJsLike } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
+                needsJson ? `import type { JsonValueType } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
             ].filter(Boolean).join('\n');
-            importStatements = `${helperImports}\n${importStatements}`;
-              importStatements = Array.from(imports).map(originalImportPath => {
-            let targetDirPath;
-            let processedImportPath = originalImportPath;
+            importStatements = `${helperImports}\n${importStatementsArray.join('\n')}`;
 
-            if (originalImportPath.startsWith('enum/')) {
-                targetDirPath = enumOutputDir;
-                processedImportPath = originalImportPath.replace('enum/', '');
-            } else if (originalImportPath.startsWith('model/')) {
-                targetDirPath = modelOutputDir;
-                processedImportPath = originalImportPath.replace('model/', '');
-            } else {
-                targetDirPath = helperOutputDir; // Corrected: Assuming helper import
-                processedImportPath = originalImportPath.replace('helper/', ''); // Corrected: Assuming helper import
-            }
-
-            const targetFilePath = path.join(targetDirPath, `${path.basename(processedImportPath)}.ts`);
-            const rawRelativePath = path.relative(modelFilesPath, targetFilePath); // Relative from model file
-            let relativePath = rawRelativePath.replace(/\\/g, '/');
-
-            // Remove .ts extension and prefixes from the final import path
-            relativePath = relativePath.replace(/\.ts$/, '');
-            relativePath = relativePath.replace(/^(enum\/|model\/|helper\/)/, ''); // Remove prefixes if any remain
-
-            return `import type { ${path.basename(processedImportPath)} } from '${relativePath}';`;
-        }).join('\n');
         }
 
     }
