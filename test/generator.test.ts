@@ -28,8 +28,8 @@ const setupTestSchema = (schema: string, filePath: string) => {
 };
 
 describe('TS Interface Generator', () => {
-  beforeAll(() => {
-    $`clear`;
+  beforeAll(async () => {
+    await $`clear`;
     mkdirSync(testSchemaDir, { recursive: true });
     setupTestSchema(`
             model User {
@@ -471,4 +471,412 @@ export interface Product {
     const addressSchema = readOutput('Address.ts')?.trim();
     expect(addressSchema).toInclude('coordinates: Coordinate;');
   });
+
+  // 21. Array of Composite Types
+  it('should handle arrays of composite types', () => {
+    setupTestSchema(`
+      type Coordinate {
+        lat Float
+        lng Float
+      }
+
+      model Location {
+        id Int @id
+        points Coordinate[]
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const locationSchema = readOutput('Location.ts')?.trim();
+    expect(locationSchema).toInclude('points: Coordinate[];');
+  });
+
+  // 22. Optional Composite Types
+  it('should handle optional composite types', () => {
+    setupTestSchema(`
+      type Address {
+        street String
+        city String
+      }
+
+      model User {
+        id Int @id
+        address Address?
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('address: Address | null;');
+  });
+
+
+  //23
+
+  // 24. Custom Scalar Types
+  it('should handle custom scalar types', () => {
+    setupTestSchema(`
+      scalar Email
+
+      model User {
+        id Int @id
+        email Email
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('email: string;');
+  });
+
+  // 25. Multiple Relations to Same Model
+  it('should handle multiple relations to the same model', () => {
+    setupTestSchema(`
+      model User {
+        id Int @id
+        writtenPosts Post[]
+        reviewedPosts Post[]
+      }
+
+      model Post {
+        id Int @id
+        author User @relation(fields: [authorId], references: [id])
+        authorId Int
+        reviewer User @relation(fields: [reviewerId], references: [id])
+        reviewerId Int
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('writtenPosts: Post[];');
+    expect(userSchema).toInclude('reviewedPosts: Post[];');
+  });
+
+  // 26. Mixed Optional and Nullable Fields
+  it('should handle mixed optional and nullable fields', () => {
+    setupTestSchema(`
+      model MixedOptionalNullable {
+        id Int @id
+        optionalField String?
+        nullableField String @nullable
+        optionalNullableField String? @nullable
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('MixedOptionalNullable.ts')?.trim();
+    expect(schema).toInclude('optionalField: string | null;');
+    expect(schema).toInclude('nullableField: string | null;');
+    expect(schema).toInclude('optionalNullableField: string | null;');
+  });
+
+  // 27. Complex Enum Usage
+  it('should handle complex enum usage', () => {
+    setupTestSchema(`
+      enum Status {
+        ACTIVE
+        INACTIVE
+        PENDING
+      }
+
+      model User {
+        id Int @id
+        status Status
+        previousStatuses Status[]
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('status: Status;');
+    expect(userSchema).toInclude('previousStatuses: Status[];');
+  });
+
+  // 28. Model with No Relations
+  it('should handle models with no relations', () => {
+    setupTestSchema(`
+      model NoRelations {
+        id Int @id
+        name String
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('NoRelations.ts')?.trim();
+    expect(schema).toInclude(
+      `export interface NoRelations {
+    id: number;
+    name: string;
+  }`
+    );
+  });
+
+  // 29. Model with Only Optional Fields
+  it('should handle models with only optional fields', () => {
+    setupTestSchema(`
+      model AllOptional {
+        id Int @id
+        name String?
+        age Int?
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('AllOptional.ts')?.trim();
+    expect(schema).toBe(
+      `export interface AllOptional {
+    id: number;
+    name: string | null;
+    age: number | null;
+  }`
+    );
+  });
+
+  // 30. Model with Only Required Fields
+  it('should handle models with only required fields', () => {
+    setupTestSchema(`
+      model AllRequired {
+        id Int @id
+        name String
+        age Int
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('AllRequired.ts')?.trim();
+    expect(schema).toBe(
+      `export interface AllRequired {
+    id: number;
+    name: string;
+    age: number;
+  }`
+    );
+  });
+
+  // 31. Model with Mixed Array Types
+  it('should handle models with mixed array types', () => {
+    setupTestSchema(`
+      model MixedArrays {
+        id Int @id
+        names String[]
+        ages Int[]
+        flags Boolean[]
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('MixedArrays.ts')?.trim();
+    expect(schema).toInclude('names: string[];');
+    expect(schema).toInclude('ages: number[];');
+    expect(schema).toInclude('flags: boolean[];');
+  });
+
+  // 32. Model with Complex Default Values
+  it('should handle models with complex default values', () => {
+    setupTestSchema(`
+      model ComplexDefaults {
+        id Int @id @default(autoincrement())
+        createdAt DateTime @default(now())
+        updatedAt DateTime @updatedAt
+        active Boolean @default(true)
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('ComplexDefaults.ts')?.trim();
+    expect(schema).toInclude('id: number;');
+    expect(schema).toInclude('createdAt: Date;');
+    expect(schema).toInclude('updatedAt: Date;');
+    expect(schema).toInclude('active: boolean;');
+  });
+
+  // 33. Model with Multiple Enums
+  it('should handle models with multiple enums', () => {
+    setupTestSchema(`
+      enum Role {
+        USER
+        ADMIN
+      }
+
+      enum Status {
+        ACTIVE
+        INACTIVE
+      }
+
+      model User {
+        id Int @id
+        role Role
+        status Status
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('role: Role;');
+    expect(userSchema).toInclude('status: Status;');
+  });
+
+  // 34. Model with Multiple Composite Types
+  it('should handle models with multiple composite types', () => {
+    setupTestSchema(`
+      type Address {
+        street String
+        city String
+      }
+
+      type Contact {
+        phone String
+        email String
+      }
+
+      model User {
+        id Int @id
+        address Address
+        contact Contact
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('address: Address;');
+    expect(userSchema).toInclude('contact: Contact;');
+  });
+
+  // 35. Model with Nested Composite Types
+  it('should handle models with nested composite types', () => {
+    setupTestSchema(`
+      type Coordinate {
+        lat Float
+        lng Float
+      }
+
+      type Address {
+        street String
+        city String
+        coordinates Coordinate
+      }
+
+      model User {
+        id Int @id
+        address Address
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('address: Address;');
+  });
+
+  // 36. Model with Optional Arrays
+  it('should handle models with optional arrays', () => {
+    setupTestSchema(`
+      model OptionalArrays {
+        id Int @id
+        names String[]
+        ages Int[]
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('OptionalArrays.ts')?.trim();
+    expect(schema).toInclude('names: string[] ;');
+    expect(schema).toInclude('ages: number[] ;');
+  });
+
+  // 37. Model with Nullable Arrays
+  it('should handle models with nullable arrays', () => {
+    setupTestSchema(`
+      model NullableArrays {
+        id Int @id
+        names String[] @nullable
+        ages Int[] @nullable
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('NullableArrays.ts')?.trim();
+    expect(schema).toInclude('names: string[] | null;');
+    expect(schema).toInclude('ages: number[] | null;');
+  });
+
+  // 38. Model with Mixed Optional and Nullable Arrays
+  it('should handle models with mixed optional and nullable arrays', () => {
+    setupTestSchema(`
+      model MixedArrays {
+        id Int @id
+        optionalNames String[]
+        nullableAges Int[] @nullable
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const schema = readOutput('MixedArrays.ts')?.trim();
+    expect(schema).toInclude('optionalNames: string[];');
+    expect(schema).toInclude('nullableAges: number[] | null;');
+  });
+
+  // 39. Model with Complex Relations
+  it('should handle models with complex relations', () => {
+    setupTestSchema(`
+      model User {
+        id Int @id
+        posts Post[]
+      }
+
+      model Post {
+        id Int @id
+        author User @relation(fields: [authorId], references: [id])
+        authorId Int
+        comments Comment[]
+      }
+
+      model Comment {
+        id Int @id
+        post Post @relation(fields: [postId], references: [id])
+        postId Int
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('posts: Post[];');
+    const postSchema = readOutput('Post.ts')?.trim();
+    expect(postSchema).toInclude('comments: Comment[];');
+  });
+
+  // 40. Model with Multiple Composite Types and Enums
+  it('should handle models with multiple composite types and enums', () => {
+    setupTestSchema(`
+      enum Role {
+        USER
+        ADMIN
+      }
+
+      type Address {
+        street String
+        city String
+      }
+
+      type Contact {
+        phone String
+        email String
+      }
+
+      model User {
+        id Int @id
+        role Role
+        address Address
+        contact Contact
+      }
+    `, testSchemaPath1);
+
+    generate([testSchemaPath1, testSchemaPath2]);
+    const userSchema = readOutput('User.ts')?.trim();
+    expect(userSchema).toInclude('role: Role;');
+    expect(userSchema).toInclude('address: Address;');
+    expect(userSchema).toInclude('contact: Contact;');
+  });
+
+
 });
