@@ -1,0 +1,9 @@
+type Address {
+street String
+city String
+coordinates Coordinate
+}
+type Coordinate {
+lat Float
+lng Float
+}
