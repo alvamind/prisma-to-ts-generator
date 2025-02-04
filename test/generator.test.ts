@@ -606,9 +606,9 @@ export interface Product {
     const schema = readOutput('NoRelations.ts')?.trim();
     expect(schema).toInclude(
       `export interface NoRelations {
-    id: number;
-    name: string;
-  }`
+  id: number;
+  name: string;
+}`
     );
   });
 
@@ -616,20 +616,20 @@ export interface Product {
   it('should handle models with only optional fields', () => {
     setupTestSchema(`
       model AllOptional {
-        id Int @id
-        name String?
-        age Int?
-      }
+      id Int @id
+      name String?
+      age Int?
+    }
     `, testSchemaPath1);
 
     generate([testSchemaPath1, testSchemaPath2]);
     const schema = readOutput('AllOptional.ts')?.trim();
     expect(schema).toBe(
       `export interface AllOptional {
-    id: number;
-    name: string | null;
-    age: number | null;
-  }`
+  id: number;
+  name: string | null;
+  age: number | null;
+}`
     );
   });
 
@@ -647,10 +647,10 @@ export interface Product {
     const schema = readOutput('AllRequired.ts')?.trim();
     expect(schema).toBe(
       `export interface AllRequired {
-    id: number;
-    name: string;
-    age: number;
-  }`
+  id: number;
+  name: string;
+  age: number;
+}`
     );
   });
 
@@ -780,8 +780,8 @@ export interface Product {
 
     generate([testSchemaPath1, testSchemaPath2]);
     const schema = readOutput('OptionalArrays.ts')?.trim();
-    expect(schema).toInclude('names: string[] ;');
-    expect(schema).toInclude('ages: number[] ;');
+    expect(schema).toInclude('names: string[];');
+    expect(schema).toInclude('ages: number[];');
   });
 
   // 37. Model with Nullable Arrays

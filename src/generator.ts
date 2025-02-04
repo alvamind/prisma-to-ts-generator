@@ -63,7 +63,7 @@ function genModel(
   const imports = new Set<string>();
   let content = '';
   if (model.comments && model.comments.length) {
-    content += model.comments.map(c => `${c}\n`).join('');
+    content += model.comments.map(c => `/// ${c}\n`).join('');
   }
 
   let fields = "";
@@ -74,10 +74,10 @@ function genModel(
     fields += `${field.comment ? `  ${field.comment}\n` : ''}  ${field.name}: ${tsType};\n`;
   });
   imports.forEach(i => content += `import type { ${i} } from './${i}';\n`)
-  const interfaceContent = fields ? `{\n${fields.trimEnd()}\n}` : `{}`;
-  content += `export interface ${model.name} ${interfaceContent}\n`
+  const interfaceContent = fields ? `{\n${fields.trimEnd()}\n}` : `{}`; // Trim fields to remove trailing newline
+  content = `${content}export interface ${model.name} ${interfaceContent}\n`
 
-  writeFileSync(path.join(outDir, `${model.name}.ts`), content);
+  writeFileSync(path.join(outDir, `${model.name}.ts`), content.trimEnd()); // Trim content before writing
 }
 
 function getTsType(
