@@ -26,6 +26,7 @@ interface GeneratorConfig {
   dirOrFilesPath: string[];
   outputPath: string;
   multiFiles: boolean;
+  modelVariants?: ('Regular' | 'Optional' | 'WithRelations' | 'OptionalRelations' | 'PartialRelations' | 'OptionalFullRelations')[];
 }
 
 const processObject = (node: any, isType: boolean): ModelDef => ({
@@ -57,7 +58,7 @@ const writeContentToFile = (filePath: string, content: string) => {
 const genEnum = (enumDef: EnumDef, outDir: string, multiFiles: boolean): string => {
   const content = `export type ${enumDef.name} = ${enumDef.values.map(v => `'${v}'`).join(' | ')};\n`;
   if (multiFiles) {
-      writeContentToFile(path.join(outDir, 'enum', `${enumDef.name}.ts`), content);
+      writeContentToFile(path.join(outDir, 'enums', `${enumDef.name}.ts`), content);
       return '';
   }
   return content;
@@ -83,16 +84,42 @@ const getTsType = (
   enums: EnumDef[],
   types: ModelDef[],
   imports: Set<string>,
-  multiFiles: boolean
+  multiFiles: boolean,
+  variantDir: string | undefined,
+  outDir: string | undefined,
+  variantName?: string
 ): string => {
   const cleanType = type.replace('[]', '');
   if (typeMap[cleanType]) return typeMap[cleanType];
   if (enums.some(e => e.name === cleanType)) {
-    if (multiFiles) imports.add(`../enum/${cleanType}`);
+    if (multiFiles && variantDir && outDir) {
+      imports.add(path.relative(variantDir, path.join(outDir, 'enums', cleanType)));
+    }
     return cleanType;
   }
+
+  const regularVariantDir = (multiFiles && outDir) ? path.join(outDir, 'variants', 'Regular') : outDir;
+  const safeRegularVariantDir = typeof regularVariantDir === 'string' ? regularVariantDir : (typeof outDir === 'string' ? outDir : '.');
+
   if (allModels.some(m => m.name === cleanType && !m.isType) || types.some(t => t.name === cleanType)) {
-    if (multiFiles && cleanType.trim().toLowerCase() !== currModel.name.trim().toLowerCase()) imports.add(`../model/${cleanType}`);
+    if (multiFiles && cleanType.trim().toLowerCase() !== currModel.name.trim().toLowerCase() && variantDir && outDir && variantName) {
+      let importPath: string;
+      if (variantName === 'Regular') {
+        if (cleanType === currModel.name) {
+          return cleanType; // Self-reference: No import needed
+        } else {
+          importPath = `./${cleanType}`; // Direct relative import within Regular variant - simplified
+        }
+      } else {
+        importPath = path.relative(variantDir, path.join(safeRegularVariantDir, `${cleanType}`)); // Corrected line: Removed '.ts'
+      }
+
+      if (!importPath.startsWith('.')) {
+        imports.add('./' + importPath);
+      } else {
+        imports.add(importPath);
+      }
+    }
     return cleanType;
   }
   return 'string';
@@ -105,14 +132,32 @@ const genModel = (
   types: ModelDef[],
   outDir: string,
   multiFiles: boolean,
-  needsHelperTypes: boolean
+  needsHelperTypes: boolean,
+  variantName: string
 ): string => {
   const imports = new Set<string>();
+  const variantDir = multiFiles ? path.join(outDir, 'variants', variantName) : undefined;
 
   let content = model.comments?.map(c => `/// ${c}\n`).join('') || '';
 
-  const fieldsContent = model.fields.map(field => {
-    let tsType = getTsType(field.type, field, model, allModels, enums, types, imports, multiFiles);
+  // Modify fields based on variantName
+  let variantFields = model.fields;
+  switch (variantName) {
+    case 'Optional':
+    case 'OptionalFullRelations':
+    case 'OptionalRelations':
+      variantFields = model.fields.map(f => ({ ...f, isOptional: true }));
+      break;
+    case 'Regular':
+    case 'WithRelations':
+    case 'PartialRelations':
+      break;
+    default:
+      break;
+  }
+
+  const fieldsContent = variantFields.map(field => {
+    let tsType = getTsType(field.type, field, model, allModels, enums, types, imports, multiFiles, variantDir, outDir, variantName);
     if (field.isArray) tsType += '[]';
     if (field.isOptional) tsType += ' | null';
     const commentLine = field.comment ? `  ${field.comment}\n` : '';
@@ -120,25 +165,25 @@ const genModel = (
   }).join('\n');
 
   let importStatements = '';
-  if (multiFiles) {
-    importStatements = Array.from(imports).map(i => `import type { ${path.basename(i)} } from '${i}';`).join('\n');
+  if (multiFiles && variantDir) {
+    importStatements = Array.from(imports).map(i => {
+        const baseName = path.basename(i, '.ts');
+        return `import type { ${baseName} } from '${i}';`;
+    }).join('\n');
     const needsDecimal = model.fields.some(f => f.type === 'Decimal');
     const needsJson = model.fields.some(f => f.type === 'Json');
     const helperImports = [
-      needsDecimal ? `import type { DecimalJsLike } from '../helper/helper-types';` : '',
-      needsJson ? `import type { JsonValueType } from '../helper/helper-types';` : '',
+      needsDecimal ? `import type { DecimalJsLike } from '${path.relative(variantDir, path.join(outDir, 'helper', 'helper-types'))}';` : '',
+      needsJson ? `import type { JsonValueType } from '${path.relative(variantDir, path.join(outDir, 'helper', 'helper-types'))}';` : '',
     ].filter(Boolean).join('\n');
     importStatements = `${helperImports}\n${importStatements}`;
   }
 
+  const modelContent = `${importStatements.trim()}\n${content}export interface ${model.name}${variantName !== 'Regular' ? variantName : ''} ${fieldsContent ? `{\n${fieldsContent}\n}` : `{}`}\n`;
 
-  const modelContent = `${importStatements.trim()}\n${content}export interface ${model.name} ${fieldsContent ? `{\n${fieldsContent}\n}` : `{}`}\n`;
-
-  if (multiFiles) {
-      writeContentToFile(path.join(outDir, 'model', `${model.name}.ts`), modelContent);
-      return '';
-  }
-  return modelContent;
+  const modelOutputPath = multiFiles ? path.join(variantDir!, `${model.name}${variantName !== 'Regular' ? variantName : ''}.ts`) : path.join(outDir, `${model.name}${variantName !== 'Regular' ? variantName : ''}.ts`);
+  writeContentToFile(modelOutputPath, modelContent);
+  return multiFiles ? '' : modelContent;
 };
 
 
@@ -158,12 +203,16 @@ const getAllPrismaFiles = (dirPath: string): string[] => {
 
 
 export const generate = (config: GeneratorConfig) => {
-  const { dirOrFilesPath, outputPath, multiFiles } = config;
+  const { dirOrFilesPath, outputPath, multiFiles, modelVariants } = config;
   const allModels: ModelDef[] = [];
   const allEnums: EnumDef[] = [];
   const allTypes: ModelDef[] = [];
   const resolvedSchemaPaths: string[] = [];
   let needsHelperTypes = false;
+
+  const variantsToGenerate = modelVariants || ['Regular'];
+
+  const outDir = path.join(process.cwd(), outputPath);
 
   dirOrFilesPath.forEach(schemaPath => {
     const stat = statSync(schemaPath);
@@ -197,11 +246,13 @@ export const generate = (config: GeneratorConfig) => {
     });
   });
 
-  const outDir = path.join(process.cwd(), outputPath);
+
   if (multiFiles) {
-      mkdirSync(path.join(outDir, 'model'), { recursive: true });
+      variantsToGenerate.forEach(variant => {
+          mkdirSync(path.join(outDir, 'variants', variant), { recursive: true });
+      });
       mkdirSync(path.join(outDir, 'helper'), { recursive: true });
-      mkdirSync(path.join(outDir, 'enum'), { recursive: true });
+      mkdirSync(path.join(outDir, 'enums'), { recursive: true });
   } else {
       mkdirSync(outDir, { recursive: true });
   }
@@ -254,8 +305,13 @@ export const isValidDecimalInput = (v?: null | string | number | DecimalJsLike):
   allEnums.forEach(enumDef => {
       indexContent += genEnum(enumDef, outDir, multiFiles);
   });
-  [...allTypes, ...allModels].forEach(model => {
-      indexContent += genModel(model, allModels, allEnums, allTypes, outDir, multiFiles, needsHelperTypes);
+
+  variantsToGenerate.forEach(variantName => {
+      [...allTypes, ...allModels].forEach(model => {
+          if (multiFiles || variantName === 'Regular') {
+              indexContent += genModel(model, allModels, allEnums, allTypes, outDir, multiFiles, needsHelperTypes, variantName);
+          }
+      });
   });
 
 

@@ -1,7 +1,15 @@
 import { generate } from "./generator";
 
 generate({
-  dirOrFilesPath: ['prisma/schema'], // or ['./prisma'] directory
+  dirOrFilesPath: ['prisma/schema'],
   outputPath: 'output/ts',
-  multiFiles: false // or false for single index.ts
+  multiFiles: true,
+  modelVariants: [
+    'Regular',
+    'Optional',
+    'WithRelations',
+    'OptionalRelations',
+    'PartialRelations',
+    'OptionalFullRelations',
+  ], // Generate all variants
 });
