@@ -27,14 +27,14 @@ function processObject(node: any, isType: boolean): ModelDef {
   return {
     name: node.name,
     isType,
-    comments: props.filter((p: any) => p.type === 'comment').map((c: any) => c.text),
+    comments: (node.comments || []).map((c: any) => c.text),
     fields: props
       .filter((p: any) => p.type === 'field')
       .map((p: any) => ({
         name: p.name,
         type: typeof p.fieldType === 'string' ? p.fieldType : p.fieldType.name,
         isArray: p.array || false,
-        isOptional: p.optional || false,
+        isOptional: p.optional || (p.attributes || []).some((attr: any) => attr.name === 'nullable') || false,
         comment: p.comment,
       })),
   };
