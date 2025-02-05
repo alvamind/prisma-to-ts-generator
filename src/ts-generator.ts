@@ -1,12 +1,10 @@
 import path from 'path';
-import { ModelDef, EnumDef, GeneratorConfig, FieldDef } from './types';
+import { ModelDef, EnumDef, GeneratorConfig, FieldDef, VariantType } from './types';
 import { getTsType } from './type-mapping';
-import { writeFile, resolveDirPath, resolveOutputPath } from './file-utils';
+import { writeFile, resolveOutputPath } from './file-utils';
 
 const generateEnumContent = (enumDef: EnumDef): string =>
     `export type ${enumDef.name} = ${enumDef.values.map(v => `'${v}'`).join(' | ')};\n`;
-
-export type VariantType = 'CreateInput' | 'UpdateInput' | 'Partial' | 'Regular';
 
 const generateModelFieldsContent = (
     model: ModelDef, allModels: ModelDef[], enums: EnumDef[], types: ModelDef[],
@@ -112,7 +110,7 @@ export const generateModel = (
     const resolvedOutputPath = resolveOutputPath(outDir);
 
     if (multiFiles) {
-        const variantsToGenerate = modelVariants || ['Regular'];
+        const variantsToGenerate = (modelVariants || ['Regular']) as VariantType[];
 
         variantsToGenerate.forEach(currentVariant => {
             const fieldsContent = generateModelFieldsContent(model, allModels, enums, types, imports, multiFiles, currentVariant as VariantType);

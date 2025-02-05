@@ -1,8 +1,8 @@
 import { getSchema } from '@mrleebo/prisma-ast';
 import path from 'path';
-import { GeneratorConfig, ModelDef, EnumDef } from './types';
+import { GeneratorConfig, ModelDef, EnumDef, VariantType } from './types';
 import { processModel, processEnum } from './ast-processor';
-import { generateEnum, generateModel, VariantType } from './ts-generator';
+import { generateEnum, generateModel } from './ts-generator';
 import { readFile, findFilesByExtension, ensureDirExists, resolveDirPath, resolveOutputPath, writeFile, isDirectory } from './file-utils';
 import { needsHelperTypes } from './type-mapping';
 
