@@ -1,13 +1,20 @@
-// ast-processor.ts
+// prisma-to-ts-generator/src/ast-processor.ts
 import { FieldDef, ModelDef, EnumDef } from './types';
 
-const processField = (p: any): FieldDef => ({
-    name: p.name,
-    type: typeof p.fieldType === 'string' ? p.fieldType : p.fieldType.name,
-    isArray: !!p.array,
-    isOptional: !!p.optional || (p.attributes || []).some((attr: any) => attr.name === 'nullable'),
-    comment: p.comment,
-});
+const processField = (p: any): FieldDef => {
+    const isPrimaryKey = (p.attributes || []).some((attr: any) => attr.name === 'id');
+    const isForeignKey = (p.attributes || []).some((attr: any) => attr.name === 'relation');
+
+    return {
+        name: p.name,
+        type: typeof p.fieldType === 'string' ? p.fieldType : p.fieldType.name,
+        isArray: !!p.array,
+        isOptional: !!p.optional || (p.attributes || []).some((attr: any) => attr.name === 'nullable'),
+        comment: p.comment,
+        isPrimaryKey: isPrimaryKey,
+        isForeignKey: isForeignKey,
+    };
+};
 
 export const processModel = (node: any, isType: boolean): ModelDef => ({
     name: node.name,

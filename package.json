@@ -1,6 +1,6 @@
 {
   "name": "prisma-to-ts-generator",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "automatically create TypeScript interfaces and types that mirror your Prisma schema models and enums",
   "module": "index.ts",
   "type": "module",
