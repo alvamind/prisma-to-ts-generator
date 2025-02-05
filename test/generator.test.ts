@@ -7,7 +7,7 @@ import {
 } from 'fs';
 import path from 'path';
 import { describe, it, beforeAll, afterAll, beforeEach, expect } from 'bun:test';
-import { generate } from '../generator';
+import { generate } from '../single-file-version.generator';
 import { $ } from 'bun';
 
 const outputDir = path.join(process.cwd(), 'output');

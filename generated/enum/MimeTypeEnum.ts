@@ -1,1 +1,0 @@
-export type MimeTypeEnum = 'UNKNOWN' | 'MP4' | 'JPG' | 'PNG' | 'PDF' | 'DOC' | 'DOCX' | 'XLS' | 'XLSX' | 'CSV' | 'PPT' | 'PPTX' | 'ZIP' | 'RAR' | 'TXT' | 'JSON' | 'XML' | 'HTML' | 'CSS' | 'JS' | 'TS';

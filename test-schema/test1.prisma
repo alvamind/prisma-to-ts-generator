@@ -1,0 +1,18 @@
+enum Role {
+USER
+ADMIN
+}
+type Address {
+street String
+city String
+}
+type Contact {
+phone String
+email String
+}
+model User {
+id Int @id
+role Role
+address Address
+contact Contact
+}

@@ -1,7 +1,22 @@
 {
   "name": "prisma-to-ts-generator",
+  "version": "1.0.1",
+  "description": "automatically create TypeScript interfaces and types that mirror your Prisma schema models and enums",
   "module": "index.ts",
   "type": "module",
+  "author": "Alvamind",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alvamind/prisma-to-ts-generator.git"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -13,6 +28,7 @@
     "alvamind-tools": "^1.0.23"
   },
   "scripts": {
+    "build": "tsc && tsc -p tsconfig.build.json",
     "source": "generate-source output=documentation.md exclude=dist/,node_modules/,.git/",
     "commit": "commit",
     "clean": "clean",

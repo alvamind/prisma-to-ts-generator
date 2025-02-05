@@ -1,0 +1,15 @@
+model Category {
+id   Int    @id @default(autoincrement())
+name String
+products Product[]
+}
+model Product {
+id         Int    @id @default(autoincrement())
+name       String
+category   Category @relation(fields: [categoryId], references: [id])
+categoryId Int
+}
+enum Status {
+ACTIVE
+INACTIVE
+}
