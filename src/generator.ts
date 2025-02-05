@@ -1,9 +1,8 @@
-// generator.ts
 import { getSchema } from '@mrleebo/prisma-ast';
 import path from 'path';
 import { GeneratorConfig, ModelDef, EnumDef } from './types';
 import { processModel, processEnum } from './ast-processor';
-import { generateEnum, generateModel, VariantType } from './ts-generator'; // Import VariantType
+import { generateEnum, generateModel, VariantType } from './ts-generator';
 import { readFile, findFilesByExtension, ensureDirExists, resolveDirPath, resolveOutputPath, writeFile, isDirectory } from './file-utils';
 import { needsHelperTypes } from './type-mapping';
 
@@ -16,9 +15,9 @@ export const generate = async (config: GeneratorConfig) => {
     let hasHelperTypes = false;
 
     const outDir = resolveOutputPath(outputPath);
-    const resolvedModelDirPath = resolveDirPath(outputPath, 'model');
-    const resolvedEnumDirPath = resolveDirPath(outputPath, 'enum');
-    const resolvedHelperDirPath = resolveDirPath(outputPath, 'helper');
+    const resolvedModelDirPath = path.join(outDir, 'model'); // Use resolved outDir
+    const resolvedEnumDirPath = path.join(outDir, 'enum'); // Use resolved outDir
+    const resolvedHelperDirPath = path.join(outDir, 'helper'); // Use resolved outDir
 
     dirOrFilesPath.forEach(schemaPath => {
         const resolvedPaths = path.isAbsolute(schemaPath) ? [schemaPath] : [path.join(process.cwd(), schemaPath)];
@@ -27,7 +26,6 @@ export const generate = async (config: GeneratorConfig) => {
             else resolvedSchemaPaths.push(p);
         });
     });
-
 
     resolvedSchemaPaths.forEach(prismaSchemaPath => {
         const schema = getSchema(readFile(prismaSchemaPath));
@@ -49,7 +47,6 @@ export const generate = async (config: GeneratorConfig) => {
         ensureDirExists(outDir);
         if (hasHelperTypes) writeFile(path.join(outDir, 'helper-types.ts'), readFile(path.join(__dirname, 'helper-types.ts')));
     }
-
 
     let indexContent = '';
     if (hasHelperTypes && !multiFiles) indexContent += `import type { DecimalJsLike, JsonValueType } from './helper-types';\n\n`;

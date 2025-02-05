@@ -1,3 +1,5 @@
+import type { AIProviderKey } from './AIProviderKey';
+import type { AIResponse } from './AIResponse';
 export interface AIResponseError {
   id: number;
   // Error message

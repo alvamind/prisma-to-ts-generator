@@ -1,3 +1,5 @@
+import type { DynamicAttribute } from './DynamicAttribute';
+import type { Workspace } from './Workspace';
 export interface DynamicAttributeGroup {
   id: number;
   name: string;

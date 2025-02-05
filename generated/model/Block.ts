@@ -1,3 +1,14 @@
+import type { BlockTypeEnum } from '../enum/BlockTypeEnum';
+import type { File } from './File';
+import type { BlockTask } from './BlockTask';
+import type { BlockJournal } from './BlockJournal';
+import type { BlockCalorie } from './BlockCalorie';
+import type { BlockRitual } from './BlockRitual';
+import type { User } from './User';
+import type { Folder } from './Folder';
+import type { Measurement } from './Measurement';
+import type { BlockTag } from './BlockTag';
+import type { Workspace } from './Workspace';
 export interface Block {
   id: number;
   name: string;

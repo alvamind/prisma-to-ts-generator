@@ -1,3 +1,6 @@
+import type { DayOfWeekEnum } from '../enum/DayOfWeekEnum';
+import type { User } from './User';
+import type { BlockTask } from './BlockTask';
 export interface TimeBlock {
   id: number;
   name: string;

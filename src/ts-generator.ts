@@ -1,8 +1,7 @@
-// ts-generator.ts
 import path from 'path';
 import { ModelDef, EnumDef, GeneratorConfig, FieldDef } from './types';
 import { getTsType } from './type-mapping';
-import { writeFile, resolveDirPath } from './file-utils';
+import { writeFile, resolveDirPath, resolveOutputPath } from './file-utils';
 
 const generateEnumContent = (enumDef: EnumDef): string =>
     `export type ${enumDef.name} = ${enumDef.values.map(v => `'${v}'`).join(' | ')};\n`;
@@ -45,11 +44,10 @@ const generateModelFieldsContent = (
         }).join('\n');
 };
 
-
 const generateModelVariantContent = (
     model: ModelDef, fieldsContent: string, variant: VariantType, imports: Set<string>,
-    multiFiles: boolean, resolvedHelperDirPath: string, modelFilePath: string
-): { content: string, importStatements: string }  => { // Return importStatements
+    multiFiles: boolean, resolvedHelperDirPath: string, modelFilePath: string, resolvedOutputPath: string
+): { content: string, importStatements: string } => {
     let helperImports = '';
     const needsDecimal = model.fields.some(f => f.type === 'Decimal');
     const needsJson = model.fields.some(f => f.type === 'Json');
@@ -57,16 +55,24 @@ const generateModelVariantContent = (
     let importStatements = '';
 
     if (multiFiles) {
-        const importStatementsArray = Array.from(imports).map(originalImportPath => {
-            const [typeDir, importName] = originalImportPath.split('/');
-            const targetDirPath = resolveDirPath('', path.join('output', typeDir));
-            const targetFilePath = path.join(targetDirPath, `${importName}.ts`);
-            const relativePath = path.relative(path.dirname(modelFilePath), targetFilePath).replace(/\\/g, '/');
-            return `import type { ${importName} } from '${relativePath.startsWith('.') ? relativePath : './' + relativePath}';`;
-        });
+      // Modify the importStatementsArray mapping in generateModelVariantContent function
+      const importStatementsArray = Array.from(imports).map(originalImportPath => {
+          const [typeDir, importName] = originalImportPath.split('/');
+          let relativePath;
+          if (typeDir === 'enum') {
+              relativePath = `../enum/${importName}`;
+          } else if (typeDir === 'model') {
+              relativePath = `./${importName}`;
+          } else {
+              relativePath = `./${importName}`; // default case, though unlikely
+          }
+          return `import type { ${importName} } from '${relativePath}';`;
+      });
 
         const helperTypesFilePath = path.join(resolvedHelperDirPath, 'helper-types.ts');
-        const relativeHelperPath = path.relative(path.dirname(modelFilePath), helperTypesFilePath).replace(/\\/g, '/');
+        const relativeHelperPath = path.relative(path.dirname(modelFilePath), helperTypesFilePath)
+            .replace(/\\/g, '/')
+            .replace(/\.ts$/, ''); // Remove .ts extension
         helperImports = [
             needsDecimal ? `import type { DecimalJsLike } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
             needsJson ? `import type { JsonValueType } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
@@ -75,7 +81,7 @@ const generateModelVariantContent = (
     }
 
     const variantName = variant === 'Regular' ? model.name : `${model.name}${variant}`;
-    let variantContent = ''; // Declare here
+    let variantContent = '';
     if (['Partial', 'CreateInput', 'UpdateInput'].includes(variant)) {
         const baseTypeName = model.name;
         const omitFields = "'id' | 'createdAt' | 'updatedAt'";
@@ -88,7 +94,8 @@ const generateModelVariantContent = (
     } else {
         variantContent = `export interface ${variantName} ${fieldsContent ? `{\n${fieldsContent}\n}` : `{}`}\n`;
     }
-    return { content: variantContent, importStatements }; // Return both
+
+    return { content: variantContent, importStatements };
 };
 
 export const generateModel = (
@@ -100,39 +107,29 @@ export const generateModel = (
     const modelOutputDir = resolvedModelDirPath;
     const modelFilePath = path.join(modelOutputDir, `${model.name}.ts`);
     let content = model.comments?.map(c => `/// ${c}\n`).join('') || '';
-
-    const fieldsContent = generateModelFieldsContent(model, allModels, enums, types, imports, multiFiles, variant);
-    const variantGenResult = generateModelVariantContent(model, fieldsContent, variant, imports, multiFiles, resolvedHelperDirPath, modelFilePath); // Capture result
-    const variantContent = variantGenResult.content;
-    const importStatements = variantGenResult.importStatements; // Extract importStatements
-
+    let allVariantsFileContent = '';
+    let combinedImportStatements = '';
+    const resolvedOutputPath = resolveOutputPath(outDir);
 
     if (multiFiles) {
-        let fileContentToWrite = '';
-        if (modelVariants && modelVariants.includes('Regular')) {
-            const regularVariantGenResult = generateModelVariantContent(model, generateModelFieldsContent(model, allModels, enums, types, new Set(), multiFiles, 'Regular'), 'Regular', new Set(), multiFiles, resolvedHelperDirPath, modelFilePath);
-            fileContentToWrite += regularVariantGenResult.content + '\n';
-        }
-        if (modelVariants && modelVariants.includes('Partial')) {
-            const partialVariantGenResult = generateModelVariantContent(model, '', 'Partial', new Set(), multiFiles, resolvedHelperDirPath, modelFilePath);
-            fileContentToWrite += partialVariantGenResult.content + '\n';
-        }
-        if (modelVariants && modelVariants.includes('CreateInput')) {
-            const createInputVariantGenResult = generateModelVariantContent(model, generateModelFieldsContent(model, allModels, enums, types, new Set(), multiFiles, 'CreateInput'), 'CreateInput', new Set(), multiFiles, resolvedHelperDirPath, modelFilePath);
-            fileContentToWrite += createInputVariantGenResult.content + '\n';
-        }
-        if (modelVariants && modelVariants.includes('UpdateInput')) {
-            const updateInputVariantGenResult = generateModelVariantContent(model, generateModelFieldsContent(model, allModels, enums, types, new Set(), multiFiles, 'UpdateInput'), 'UpdateInput', new Set(), multiFiles, resolvedHelperDirPath, modelFilePath);
-            fileContentToWrite += updateInputVariantGenResult.content + '\n';
-        }
+        const variantsToGenerate = modelVariants || ['Regular'];
 
-        writeFile(modelFilePath, `${variant === 'Regular' ? importStatements.trim() + '\n' : ''}${content}${fileContentToWrite}`); // Use captured importStatements
+        variantsToGenerate.forEach(currentVariant => {
+            const fieldsContent = generateModelFieldsContent(model, allModels, enums, types, imports, multiFiles, currentVariant as VariantType);
+            const variantGenResult = generateModelVariantContent(model, fieldsContent, currentVariant as VariantType, imports, multiFiles, resolvedHelperDirPath, modelFilePath, resolvedOutputPath);
+            allVariantsFileContent += variantGenResult.content + '\n';
+            combinedImportStatements = variantGenResult.importStatements;
+        });
+
+        writeFile(modelFilePath, `${combinedImportStatements.trim() + '\n'}${content}${allVariantsFileContent}`);
         return '';
     }
 
+    const fieldsContent = generateModelFieldsContent(model, allModels, enums, types, imports, multiFiles, variant);
+    const variantGenResult = generateModelVariantContent(model, fieldsContent, variant, imports, multiFiles, resolvedHelperDirPath, modelFilePath, resolvedOutputPath);
+    const variantContent = variantGenResult.content;
     return `${content}${variantContent}`;
 };
-
 
 export const generateEnum = (
     enumDef: EnumDef, outDir: string, multiFiles: boolean, resolvedEnumDirPath: string

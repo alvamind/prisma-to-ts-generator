@@ -1,3 +1,6 @@
+import type { DecimalJsLike } from '../helper/helper-types';
+import type { AIProvider } from './AIProvider';
+import type { LLMModel } from './LLMModel';
 export interface AIProviderToLLMModel {
   id: number;
   providerId: number;

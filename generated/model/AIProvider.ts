@@ -1,3 +1,5 @@
+import type { AIProviderKey } from './AIProviderKey';
+import type { AIProviderToLLMModel } from './AIProviderToLLMModel';
 export interface AIProvider {
   id: number;
   name: string;

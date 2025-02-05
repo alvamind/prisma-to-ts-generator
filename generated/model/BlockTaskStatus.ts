@@ -1,3 +1,6 @@
+import type { ProgressStatusEnum } from '../enum/ProgressStatusEnum';
+import type { Workspace } from './Workspace';
+import type { TaskStatus } from './TaskStatus';
 export interface BlockTaskStatus {
   id: number;
   name: string;

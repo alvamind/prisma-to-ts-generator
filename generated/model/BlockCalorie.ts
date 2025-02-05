@@ -1,3 +1,7 @@
+import type { DecimalJsLike } from '../helper/helper-types';
+import type { MealType } from '../enum/MealType';
+import type { Block } from './Block';
+import type { UserMeta } from './UserMeta';
 export interface BlockCalorie {
   id: number;
   // Jumlah kalori

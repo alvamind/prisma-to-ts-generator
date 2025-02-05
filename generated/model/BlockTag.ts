@@ -1,3 +1,4 @@
+import type { Block } from './Block';
 export interface BlockTag {
   id: number;
   name: string;

@@ -1,3 +1,5 @@
+import type { JsonValueType } from '../helper/helper-types';
+import type { UserMeta } from './UserMeta';
 export interface UserCharacter {
   id: number;
   mbti: string;

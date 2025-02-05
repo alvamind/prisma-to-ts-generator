@@ -1,3 +1,5 @@
+import type { BlockTask } from './BlockTask';
+import type { ProgressStatusEnum } from '../enum/ProgressStatusEnum';
 export interface BlockHabit {
   id: number;
   blockTask: BlockTask;

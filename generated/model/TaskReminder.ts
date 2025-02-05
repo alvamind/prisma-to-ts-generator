@@ -1,3 +1,4 @@
+import type { BlockTask } from './BlockTask';
 export interface TaskReminder {
   id: number;
   // cron expression for scheduling

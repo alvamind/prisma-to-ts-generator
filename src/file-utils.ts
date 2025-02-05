@@ -34,4 +34,6 @@ export const findDirectoryByName = async (baseDir: string, dirName: string): Pro
 };
 
 export const resolveOutputPath = (outputPath: string): string => path.join(process.cwd(), outputPath);
-export const resolveDirPath = (outputPath: string, dirName: string): string => path.join(resolveOutputPath(outputPath), dirName);
+export const resolveDirPath = (outputPath: string, dirName: string): string => {
+    return path.join(outputPath, dirName);
+};

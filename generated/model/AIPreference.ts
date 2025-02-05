@@ -1,3 +1,4 @@
+import type { SystemPreference } from './SystemPreference';
 export interface AIPreference {
   id: number;
   civilLevel: number;

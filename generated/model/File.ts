@@ -1,3 +1,9 @@
+import type { MimeTypeEnum } from '../enum/MimeTypeEnum';
+import type { FileTypeEnum } from '../enum/FileTypeEnum';
+import type { User } from './User';
+import type { Block } from './Block';
+import type { RitualCategory } from './RitualCategory';
+import type { BlockRitual } from './BlockRitual';
 export interface File {
   id: number;
   url: string;

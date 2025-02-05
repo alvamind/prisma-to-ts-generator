@@ -1,3 +1,17 @@
+import type { UserTypeEnum } from '../enum/UserTypeEnum';
+import type { File } from './File';
+import type { UserMeta } from './UserMeta';
+import type { SystemPreference } from './SystemPreference';
+import type { Block } from './Block';
+import type { Measurement } from './Measurement';
+import type { Session } from './Session';
+import type { BlockRitual } from './BlockRitual';
+import type { Workspace } from './Workspace';
+import type { RitualCategory } from './RitualCategory';
+import type { AIResponse } from './AIResponse';
+import type { TimeBlock } from './TimeBlock';
+import type { Message } from './Message';
+import type { ChatRoom } from './ChatRoom';
 export interface User {
   id: number;
   name: string;

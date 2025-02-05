@@ -1,3 +1,10 @@
+import type { DataTypeEnum } from '../enum/DataTypeEnum';
+import type { BlockTask } from './BlockTask';
+import type { BlockJournal } from './BlockJournal';
+import type { BlockRitual } from './BlockRitual';
+import type { Measurement } from './Measurement';
+import type { DynamicAttributeGroup } from './DynamicAttributeGroup';
+import type { Workspace } from './Workspace';
 export interface DynamicAttribute {
   id: number;
   name: string;

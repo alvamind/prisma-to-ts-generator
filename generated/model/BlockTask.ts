@@ -1,3 +1,11 @@
+import type { Block } from './Block';
+import type { BlockHabit } from './BlockHabit';
+import type { UserMeta } from './UserMeta';
+import type { TimeBlock } from './TimeBlock';
+import type { TaskReminder } from './TaskReminder';
+import type { TaskStatus } from './TaskStatus';
+import type { DynamicAttribute } from './DynamicAttribute';
+import type { TaskDependency } from './TaskDependency';
 export interface BlockTask {
   id: number;
   start?: Date | null;

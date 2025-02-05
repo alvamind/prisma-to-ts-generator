@@ -1,3 +1,6 @@
+import type { JsonValueType } from '../helper/helper-types';
+import type { MetaPhysicTypeEnum } from '../enum/MetaPhysicTypeEnum';
+import type { UserMeta } from './UserMeta';
 export interface UserMetaphysic {
   id: number;
   name: string;

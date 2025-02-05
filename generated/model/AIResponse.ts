@@ -1,3 +1,7 @@
+import type { ResponseStatusEnum } from '../enum/ResponseStatusEnum';
+import type { User } from './User';
+import type { AIResponseError } from './AIResponseError';
+import type { Message } from './Message';
 export interface AIResponse {
   id: number;
   response: string;

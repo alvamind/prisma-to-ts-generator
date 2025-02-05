@@ -1,3 +1,5 @@
+import type { DecimalJsLike } from '../helper/helper-types';
+import type { UserMeta } from './UserMeta';
 export interface FavoriteFood {
   id: number;
   foodName: string;

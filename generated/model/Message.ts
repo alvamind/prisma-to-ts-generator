@@ -1,3 +1,6 @@
+import type { User } from './User';
+import type { ChatRoom } from './ChatRoom';
+import type { AIResponse } from './AIResponse';
 export interface Message {
   id: number;
   isAIMessage: boolean;

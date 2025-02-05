@@ -1,3 +1,5 @@
+import type { User } from './User';
+import type { AIPreference } from './AIPreference';
 export interface SystemPreference {
   id: number;
   theme: string;
