@@ -4,6 +4,7 @@
   "compilerOptions": {
     "sourceMap": true,
     "declaration": true,
+    "noEmit": false,
     "outDir": "./dist"
   }
 }
