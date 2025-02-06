@@ -69,7 +69,7 @@ const generateModelVariantContent = (
                 } else {
                     relativePath = `./${importName}`; // default case, though unlikely
                 }
-                return `import type { ${importName} } from '${relativePath}';`;
+                return `import { ${importName} } from '${relativePath}';`;
             } else { // Use dynamic-import-resolution
                 const params = {
                     sourceFilePath: modelFilePath,
@@ -79,9 +79,9 @@ const generateModelVariantContent = (
                 };
                 return generateImportStatement({
                     ...params,
-                    statementType: 'typescript-type',
+                    statementType: 'javascript-value', // CHANGED THIS LINE
                     namedExports: [importName] // Import the type name
-                }) || `// import type { ${importName} } from '${`path resolution failed for ${originalImportPath}`}'`; // Fallback comment
+                }) || `// import { ${importName} } from '${`path resolution failed for ${originalImportPath}`}'`; // Fallback comment
             }
 
         });
@@ -92,8 +92,8 @@ const generateModelVariantContent = (
             .replace(/\\/g, '/')
             .replace(/\.ts$/, '');
         helperImports = [
-            needsDecimal ? `import type { DecimalJsLike } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
-            needsJson ? `import type { JsonValueType } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
+            needsDecimal ? `import { DecimalJsLike } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
+            needsJson ? `import { JsonValueType } from '${relativeHelperPath.startsWith('.') ? relativeHelperPath : './' + relativeHelperPath}';` : '',
         ].filter(Boolean).join('\n');
         importStatements = `${helperImports}\n${importStatementsArray.join('\n')}`;
     }
