@@ -1,6 +1,6 @@
 {
   "name": "prisma-to-ts-generator",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "automatically create TypeScript interfaces and types that mirror your Prisma schema models and enums",
   "type": "module",
   "author": "Alvamind",
@@ -19,11 +19,12 @@
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "@mrleebo/prisma-ast": "^0.12.1",
-    "alvamind-tools": "^1.0.23"
+    "alvamind-tools": "^1.0.23",
+    "dynamic-import-resolution": "^1.0.5"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

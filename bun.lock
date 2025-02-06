@@ -6,12 +6,13 @@
       "dependencies": {
         "@mrleebo/prisma-ast": "^0.12.1",
         "alvamind-tools": "^1.0.23",
+        "dynamic-import-resolution": "^1.0.5",
       },
       "devDependencies": {
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "typescript": "^5.0.0",
+        "typescript": "^5.7.3",
       },
     },
   },
@@ -53,6 +54,8 @@
     "color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
 
     "color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
+
+    "dynamic-import-resolution": ["dynamic-import-resolution@1.0.5", "", { "dependencies": { "alvamind-tools": "^1.0.23" }, "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-K5hcOHK2SoZg0cidfzwFoYGJ0IlZAaqC4EqWyVBRMQztvtcChc6huRI5OXwHz94XgyGDbglWWVPBELDIkcrcJA=="],
 
     "fs.realpath": ["fs.realpath@1.0.0", "", {}, "sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw=="],
 
